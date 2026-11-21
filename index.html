@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GLASS · 虚拟资产量化与估值终端</title>
+<link rel="stylesheet" href="./style.css">
+<script>
+try {
+  const t = localStorage.getItem('glass:theme');
+  if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+} catch (e) {}
+</script>
+</head>
+<body>
+
+<div class="ambient" aria-hidden="true">
+  <div class="ambient-orb orb-gold"></div>
+  <div class="ambient-orb orb-jade"></div>
+  <div class="ambient-grid"></div>
+</div>
+
+<a class="skip-link" href="#app-main">跳到主内容</a>
+
+<!-- ===================== 独立认证门禁 ===================== -->
+<section class="auth-gate" id="auth-gate" hidden aria-label="登录与注册">
+  <div class="auth-card">
+    <div class="auth-card-top">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <path d="M14 2L25 8.5V19.5L14 26L3 19.5V8.5L14 2Z" stroke="url(#g-prism-auth)" stroke-width="1.6"/>
+          <path d="M14 2V14M14 14L25 8.5M14 14L3 8.5M14 14V26" stroke="url(#g-prism-auth)" stroke-width="1.2" opacity="0.65"/>
+          <polygon points="14,7.5 19.5,11 14,14.5 8.5,11" fill="url(#g-prism-auth)" opacity="0.28"/>
+          <defs>
+            <linearGradient id="g-prism-auth" x1="3" y1="2" x2="25" y2="26" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f6d79c"/>
+              <stop offset="0.55" stop-color="#e5b96f"/>
+              <stop offset="1" stop-color="#2ee59d"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="brand-text">
+          <strong>GLASS</strong>
+          <span>QUANT TERMINAL · INVITE ONLY</span>
+        </div>
+      </div>
+      <button type="button" class="theme-btn" id="btn-auth-theme" aria-label="切换明暗主题" title="切换明暗主题">☀</button>
+    </div>
+
+    <div class="demo-banner" id="auth-demo-box" hidden>
+      <div class="demo-banner-head">
+        <span class="pill gold">DEMO SANDBOX</span>
+        <span class="faint" style="font-size:12px">一键切换三种权限角色体验</span>
+      </div>
+      <div class="demo-role-btns">
+        <button type="button" class="chip" data-demo-user="admin">管理员 Admin</button>
+        <button type="button" class="chip" data-demo-user="vip_alice">VIP 会员</button>
+        <button type="button" class="chip" data-demo-user="member_bob">普通成员</button>
+      </div>
+    </div>
+
+    <div id="auth-bootstrap-box" hidden>
+      <div class="eyebrow" style="margin-top:6px">FIRST-TIME INITIALIZATION</div>
+      <h1 class="auth-heading">创建首个管理员账号</h1>
+      <p class="auth-desc">当前终端尚未配置成员账号。设置首个管理员后，可在后台签发多层级邀请码。</p>
+      <form id="auth-bootstrap-form" class="auth-form">
+        <label class="auth-label">管理员用户名
+          <input id="boot-user" required minlength="3" maxlength="32" autocomplete="username" placeholder="3~32位字母/数字/._-">
+        </label>
+        <label class="auth-label">显示昵称（可选）
+          <input id="boot-display" maxlength="40" placeholder="如 主理人">
+        </label>
+        <label class="auth-label">设置密码（至少 6 位）
+          <input id="boot-pass" type="password" required minlength="6" autocomplete="new-password" placeholder="至少 6 位字符">
+        </label>
+        <label class="auth-label">确认密码
+          <input id="boot-pass2" type="password" required minlength="6" autocomplete="new-password" placeholder="再次输入密码">
+        </label>
+        <div class="auth-error" id="boot-err" hidden></div>
+        <button type="submit" class="btn-gold auth-submit" id="btn-boot-submit">初始化并进入终端</button>
+      </form>
+    </div>
+
+    <div id="auth-normal-box" hidden>
+      <div class="auth-tabs" id="auth-tabs" role="tablist">
+        <button type="button" data-mode="login" class="active">账号登录</button>
+        <button type="button" data-mode="register">邀请码注册</button>
+      </div>
+
+      <form id="auth-login-form" class="auth-form">
+        <h1 class="auth-heading">终端认证接入</h1>
+        <p class="auth-desc">邀请制定量估值终端 · 需授权成员账号访问实时盈利雷达与资产拆解</p>
+        <label class="auth-label">用户名
+          <input id="login-user" required autocomplete="username" placeholder="请输入用户名">
+        </label>
+        <label class="auth-label">密码
+          <input id="login-pass" type="password" required autocomplete="current-password" placeholder="请输入密码">
+        </label>
+        <div class="auth-error" id="login-err" hidden></div>
+        <button type="submit" class="btn-gold auth-submit" id="btn-login-submit">登录终端</button>
+      </form>
+
+      <form id="auth-register-form" class="auth-form" hidden>
+        <h1 class="auth-heading">凭邀请码加入</h1>
+        <p class="auth-desc">邀请制闭环社区 · 账号等级（VIP / 普通成员）由您持有的邀请码自动决定</p>
+        <label class="auth-label">邀请码
+          <input id="reg-invite" required placeholder="格式如 GLS-XXXX-XXXX" autocomplete="off">
+        </label>
+        <label class="auth-label">用户名
+          <input id="reg-user" required minlength="3" maxlength="32" autocomplete="username" placeholder="3~32位字母/数字/._-">
+        </label>
+        <label class="auth-label">昵称（可选）
+          <input id="reg-display" maxlength="40" placeholder="展示用昵称">
+        </label>
+        <label class="auth-label">设置密码（至少 6 位）
+          <input id="reg-pass" type="password" required minlength="6" autocomplete="new-password" placeholder="至少 6 位字符">
+        </label>
+        <label class="auth-label">确认密码
+          <input id="reg-pass2" type="password" required minlength="6" autocomplete="new-password" placeholder="再次输入密码">
+        </label>
+        <div class="auth-error" id="reg-err" hidden></div>
+        <button type="submit" class="btn-gold auth-submit" id="btn-reg-submit">验证邀请码并注册</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 顶部悬浮导航 ===================== -->
+<nav class="nav" id="app-nav" aria-label="主导航" hidden>
+  <div class="nav-inner">
+    <div class="brand" id="brand-home" title="回到首页">
+      <svg class="brand-mark" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <path d="M14 2L25 8.5V19.5L14 26L3 19.5V8.5L14 2Z" stroke="url(#g-prism)" stroke-width="1.6"/>
+        <path d="M14 2V14M14 14L25 8.5M14 14L3 8.5M14 14V26" stroke="url(#g-prism)" stroke-width="1.2" opacity="0.65"/>
+        <polygon points="14,7.5 19.5,11 14,14.5 8.5,11" fill="url(#g-prism)" opacity="0.28"/>
+        <defs>
+          <linearGradient id="g-prism" x1="3" y1="2" x2="25" y2="26" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#f6d79c"/>
+            <stop offset="0.55" stop-color="#e5b96f"/>
+            <stop offset="1" stop-color="#2ee59d"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="brand-text">
+        <strong>GLASS</strong>
+        <span>QUANT TERMINAL</span>
+      </div>
+    </div>
+
+    <div class="segmented" id="tabs" role="group" aria-label="页面切换">
+      <button type="button" data-tab="bargains" class="tab-bargain active" aria-current="page">捡漏榜 <em class="tab-badge" id="bargain-tab-badge">TOP20</em></button>
+      <button type="button" data-tab="accounts">账号探索</button>
+      <button type="button" data-tab="favorites">个人收藏</button>
+      <button type="button" data-tab="game">市场趋势</button>
+      <button type="button" data-tab="admin">成员邀请</button>
+    </div>
+
+    <div class="nav-right">
+      <span class="pill gold" id="nav-demo-pill" hidden title="当前运行在纯前端模拟数据模式">DEMO</span>
+      <span class="user-pill" id="nav-user-pill" title="当前登录账号">
+        <span id="nav-username">—</span>
+        <em class="role-badge member" id="nav-role-badge">MEMBER</em>
+      </span>
+      <button type="button" class="chip nav-mini-btn" id="btn-open-pwd" title="修改当前登录密码">改密</button>
+      <button type="button" class="chip nav-mini-btn" id="btn-logout" title="退出登录">退出</button>
+      <button type="button" class="theme-btn" id="btn-theme" aria-label="切换明暗主题" title="切换明暗主题">☾</button>
+    </div>
+  </div>
+</nav>
+
+<main id="app-main" tabindex="-1" hidden>
+
+<!-- ===================== TOP 20 捡漏盈利榜 ===================== -->
+<section class="page" id="view-bargains">
+  <div class="hero hero-split">
+    <div>
+      <div class="eyebrow">QUANTITATIVE VALUATION · ALPHA RADAR</div>
+      <h1>全游戏 <span class="text-gold">TOP 20</span> 捡漏盈利榜</h1>
+      <p id="bargain-subtitle">基于去偏成交价模型与 CQR 区间校准，测算买入转手后的升值空间与预计净赚（已扣 8% 卖出手续费）</p>
+    </div>
+    <div class="hero-actions">
+      <span class="engine-pill" id="bargain-engine-badge">模型就绪</span>
+      <button type="button" class="chip" id="btn-refresh-bargains">刷新榜单</button>
+    </div>
+  </div>
+
+  <div class="url-analyzer card tight" id="url-analyzer-box">
+    <div class="url-analyzer-row">
+      <span class="url-analyzer-tag">链接直抓分析</span>
+      <input id="analyze-url-input" type="url" placeholder="粘贴支持平台的商品详情页链接，自动识别游戏并计算性价比与分模块估值…" autocomplete="off">
+      <button type="button" class="btn-gold" id="btn-analyze-url">⚡ 立即分析</button>
+    </div>
+    <div class="url-analyzer-status faint" id="analyze-url-status" hidden></div>
+  </div>
+
+  <div class="bargain-ribbon" id="bargain-games" role="tablist" aria-label="选择游戏"></div>
+
+  <div class="bargain-controls card tight">
+    <div class="bargain-ctrl-group">
+      <span class="ctrl-label">排序</span>
+      <div class="chips" id="bargain-sort-chips">
+        <button type="button" data-sort="composite" class="active">综合赚头</button>
+        <button type="button" data-sort="profit">净赚最多</button>
+        <button type="button" data-sort="roi">升值率最高</button>
+      </div>
+    </div>
+    <div class="bargain-ctrl-group">
+      <span class="ctrl-label">买入价</span>
+      <div class="chips" id="bargain-min-chips">
+        <button type="button" data-min="150" class="active">¥150+</button>
+        <button type="button" data-min="300">¥300+</button>
+        <button type="button" data-min="500">¥500+</button>
+        <button type="button" data-min="1000">¥1,000+</button>
+        <button type="button" data-min="2000">¥2,000+</button>
+      </div>
+    </div>
+    <div class="bargain-ctrl-group">
+      <label class="risk-toggle" for="bargain-include-risky">
+        <input type="checkbox" id="bargain-include-risky">
+        <span>包含渠道 / 换绑风控对照</span>
+      </label>
+    </div>
+    <div class="bargain-ctrl-meta faint" id="bargain-pool-info">—</div>
+  </div>
+
+  <div class="bargain-kpis" id="bargain-kpis">
+    <div class="card tight kpi-mini"><div class="stat-label">单号最高净赚</div><div class="stat-value mono text-gold" id="bk-max-save">—</div><div class="stat-sub">已扣 8% 平台卖出手续费</div></div>
+    <div class="card tight kpi-mini"><div class="stat-label">榜首净升值率</div><div class="stat-value mono text-jade" id="bk-top-ratio">—</div><div class="stat-sub" id="bk-top-sub">买入价 → 公允出手价</div></div>
+    <div class="card tight kpi-mini"><div class="stat-label">P25 急出稳赚</div><div class="stat-value mono text-cyan" id="bk-strong-cnt">—</div><div class="stat-sub">按 P25 底价出手仍净赚</div></div>
+    <div class="card tight kpi-mini"><div class="stat-label">扫描样本池</div><div class="stat-value mono" id="bk-pool">—</div><div class="stat-sub">同游戏有效在售详情</div></div>
+  </div>
+
+  <div id="bargain-loading" class="bargain-loading" style="display:none">
+    <div class="skeleton" style="height:220px"></div>
+    <div class="skeleton" style="height:220px"></div>
+    <div class="skeleton" style="height:220px"></div>
+  </div>
+
+  <div class="podium-grid" id="bargain-podium"></div>
+  <div class="bargain-deck" id="bargain-list"></div>
+  <div class="vip-lock-card" id="bargain-vip-lock" hidden>
+    <div class="vip-lock-icon">VIP</div>
+    <div class="vip-lock-body">
+      <strong id="vip-lock-title">普通成员当前仅可预览前 5 名</strong>
+      <p>其余高盈利顺位（#06 ~ #20）、⚡ 单账号模块价值瀑布拆解、链接直抓分析与市场溢价趋势仅对 VIP 会员及管理员开放。</p>
+    </div>
+  </div>
+  <div class="empty" id="bargain-empty" style="display:none">暂无符合筛选条件的在售账号</div>
+</section>
+
+<!-- ===================== 账号探索与收藏 ===================== -->
+<section class="page" id="view-accounts" style="display:none">
+  <div class="hero hero-split">
+    <div>
+      <div class="eyebrow">MARKET EXPLORER · FULL-TEXT &amp; METRICS</div>
+      <h1 id="accounts-heading">账号探索</h1>
+      <p>跨渠道实时汇总，支持关键词、游戏分类、价格区间与个人收藏隔离检索</p>
+    </div>
+  </div>
+
+  <div class="filterbar">
+    <div class="field">
+      <label for="f-source">来源</label>
+      <select id="f-source"><option value="">全部</option></select>
+    </div>
+    <div id="game-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <div class="field" style="flex:1;min-width:190px">
+      <input id="f-keyword" aria-label="搜索标题或标签" placeholder="搜索角色 / 标题 / 标签…">
+    </div>
+    <div class="field">
+      <label for="f-min">价格</label>
+      <input id="f-min" type="number" placeholder="最低" aria-label="最低价格" style="width:68px">
+      <span class="faint">–</span>
+      <input id="f-max" type="number" placeholder="最高" aria-label="最高价格" style="width:68px">
+    </div>
+    <div class="field">
+      <label for="f-sort">排序</label>
+      <select id="f-sort">
+        <option value="">最新上架</option>
+        <option value="price_asc">价格从低到高</option>
+        <option value="price_desc">价格从高到低</option>
+        <option value="value_ratio_desc">性价比最高</option>
+      </select>
+    </div>
+    <button class="chip" id="btn-reset">重置</button>
+  </div>
+
+  <div class="toolbar">
+    <span class="faint mono" style="font-size:13px" id="acct-count">—</span>
+    <span class="count" id="acct-loading" style="display:none">加载中…</span>
+  </div>
+
+  <div class="grid" style="gap:12px" id="acct-list"></div>
+  <div class="pager" id="pager"></div>
+</section>
+
+<!-- ===================== 市场趋势 ===================== -->
+<section class="page" id="view-game" style="display:none">
+  <div class="hero hero-split">
+    <div>
+      <div class="eyebrow">MARKET INTELLIGENCE · TRENDS &amp; PREMIUM</div>
+      <h1>市场价格趋势</h1>
+      <p>近 30 天账号中位价走势与核心角色/资产溢价曲线</p>
+    </div>
+    <div class="hero-actions">
+      <button type="button" class="btn-gold" id="btn-game-to-bargains">查看该游戏 TOP 20 盈利榜 ↗</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">选择游戏 <span id="model-info" class="faint model-info mono"></span></div>
+    <div class="chips game-picks" id="game-picks"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">趋势筛选 <span class="faint sub">两张图共用；角色留空表示全部账号</span></div>
+    <div class="game-controls">
+      <label class="ctl"><span>核心角色</span><input id="agent-trend-name" placeholder="如 雅"></label>
+      <label class="ctl"><span>命座≥</span><input id="agent-trend-c" type="number" placeholder="0"></label>
+      <label class="ctl"><span>专武≥</span><input id="agent-trend-r" type="number" placeholder="0"></label>
+      <button type="button" class="btn-gold" id="btn-agent-trend">查询</button>
+    </div>
+  </div>
+
+  <div class="game-grid">
+    <div class="card">
+      <div class="section-title">账号价格趋势 <span class="faint sub">近 30 天中位价</span></div>
+      <div class="chart-box game-chart"><canvas id="chart-game-price"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">角色溢价 <span class="faint sub">相对同抽数段无此角色</span></div>
+      <div class="chart-box game-chart"><canvas id="chart-agent-price"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 成员与邀请管理（仅管理员） ===================== -->
+<section class="page" id="view-admin" style="display:none">
+  <div class="hero hero-split">
+    <div>
+      <div class="eyebrow">ACCESS CONTROL · INVITE GOVERNANCE</div>
+      <h1>成员与 <span class="text-gold">邀请制</span> 管理</h1>
+      <p>签发指定角色与次数上限的邀请码，审计注册来源，实时调整成员权限或吊销会话</p>
+    </div>
+    <div class="hero-actions">
+      <button type="button" class="chip" id="btn-refresh-admin">刷新列表</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title" style="margin-top:0">生成新邀请码</div>
+    <div class="invite-gen-grid">
+      <label class="ctl"><span>赋予角色</span>
+        <select id="inv-role">
+          <option value="member">普通成员 (TOP5预览+账号)</option>
+          <option value="vip" selected>VIP 会员 (完整TOP20+拆解+趋势)</option>
+          <option value="admin">管理员 (全权限+邀请管理)</option>
+        </select>
+      </label>
+      <label class="ctl"><span>可用次数</span>
+        <input id="inv-max-uses" type="number" min="1" max="1000" value="1">
+      </label>
+      <label class="ctl"><span>有效天数</span>
+        <input id="inv-expires" type="number" min="0" max="3650" value="7" title="0 表示永久有效">
+      </label>
+      <label class="ctl invite-note-ctl"><span>备注对象</span>
+        <input id="inv-note" placeholder="如：发给合作伙伴（VIP体验）" maxlength="120">
+      </label>
+      <button type="button" class="btn-gold" id="btn-create-invite">立即签发邀请码</button>
+    </div>
+    <div class="invite-created-box" id="inv-created-box" hidden>
+      <div>
+        <span class="faint" style="font-size:12px">已生成邀请码</span>
+        <strong class="mono text-gold" id="inv-created-code" style="font-size:17px;margin-left:10px"></strong>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="chip" id="btn-copy-inv-code">复制邀请码</button>
+        <button type="button" class="btn-gold" id="btn-copy-inv-link" style="height:32px;padding:0 12px;font-size:12.5px">复制注册直达链接</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="section-title" style="margin-top:0">已签发邀请码 <span class="count" id="inv-count"></span></div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="邀请码列表">
+      <table class="table">
+        <thead>
+          <tr><th>邀请码</th><th>角色</th><th>已用 / 上限</th><th>过期时间</th><th>备注</th><th>注册成员</th><th>签发人</th><th>状态</th><th style="text-align:right">操作</th></tr>
+        </thead>
+        <tbody id="invite-rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="invite-empty" style="display:none;padding:24px 0">还没有生成任何邀请码</div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="section-title" style="margin-top:0">成员账号名册 <span class="count" id="user-count"></span></div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="成员账号">
+      <table class="table">
+        <thead>
+          <tr><th>用户名 / 昵称</th><th>角色权限</th><th>状态</th><th>邀请来源</th><th>在线会话</th><th>最近登录</th><th style="text-align:right">操作</th></tr>
+        </thead>
+        <tbody id="user-rows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 单账号价值拆解弹窗 ===================== -->
+<div class="modal" id="val-modal" hidden>
+  <div class="modal-panel val-modal-panel" role="dialog" aria-modal="true" aria-labelledby="val-title">
+    <div class="val-head">
+      <div class="val-head-main">
+        <div class="eyebrow" id="val-eyebrow">QUANTITATIVE DECOMPOSITION</div>
+        <h2 class="val-title" id="val-title">账号价值拆解</h2>
+      </div>
+      <div class="btn-row">
+        <span class="engine-pill" id="val-engine">ONNX CQR</span>
+        <button type="button" class="chip" id="btn-close-val">关闭</button>
+      </div>
+    </div>
+
+    <div id="val-loading" class="val-loading" style="display:none">
+      <div class="skeleton" style="height:108px"></div>
+      <div class="skeleton" style="height:220px;margin-top:12px"></div>
+    </div>
+    <div id="val-error" class="empty" style="display:none"></div>
+
+    <div id="val-body" style="display:none">
+      <div class="val-summary-grid" id="val-summary"></div>
+      <div class="val-gauge-box" id="val-gauge"></div>
+
+      <div class="val-section">
+        <div class="section-title">
+          分模块价值构成
+          <span class="faint sub">反事实归因 · 各模块加总等于去偏公允价</span>
+          <span class="mono text-gold" id="val-wf-total" style="margin-left:auto;font-size:13px"></span>
+        </div>
+        <div class="wf-list" id="val-components"></div>
+      </div>
+
+      <div class="val-section" id="val-chars-section" style="display:none">
+        <div class="section-title">
+          核心角色边际身价
+          <span class="faint sub">单独移除该角色及其专武后的公允价降幅（边际贡献，非线性叠加）</span>
+        </div>
+        <div class="char-grid" id="val-chars"></div>
+      </div>
+
+      <div class="val-foot">
+        <span class="faint" style="font-size:12px">由量化分位数模型单次批量反事实推理计算，去偏基准参考历史成交特征。</span>
+        <a class="btn-gold" id="val-link" href="#" target="_blank" rel="noopener">前往原商品页 ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 修改密码弹窗 ===================== -->
+<div class="modal" id="pwd-modal" hidden>
+  <div class="modal-panel" style="max-width:440px">
+    <div class="section-title" style="margin-top:0">修改我的登录密码
+      <button type="button" class="chip" id="btn-close-pwd" style="margin-left:auto">关闭</button>
+    </div>
+    <form id="pwd-form" class="auth-form" style="margin-top:14px">
+      <label class="auth-label">当前密码
+        <input id="pwd-old" type="password" required autocomplete="current-password">
+      </label>
+      <label class="auth-label">新密码（至少 6 位）
+        <input id="pwd-new" type="password" required minlength="6" autocomplete="new-password">
+      </label>
+      <label class="auth-label">确认新密码
+        <input id="pwd-new2" type="password" required minlength="6" autocomplete="new-password">
+      </label>
+      <div class="auth-error" id="pwd-msg" hidden></div>
+      <button type="submit" class="btn-gold auth-submit">确认修改</button>
+    </form>
+  </div>
+</div>
+
+</main>
+
+<script src="./vendor/chart.umd.min.js"></script>
+<script src="./config.js"></script>
+<script src="./mock-api.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
